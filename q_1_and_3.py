@@ -7,6 +7,7 @@ from prettytable import PrettyTable
 import wikipedia
 
 from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
 
 def compute_tf(tokens, vocab):
     count = Counter(tokens)
@@ -42,35 +43,36 @@ def cosine_similarity(vec1, vec2, vocab):
 def main():
   topics = ['pandesal', 'puto (food)', 'sapin-sapin', 'bibingka', 'kutsinta']
   documents = [wikipedia.page(topic) for topic in topics]
-
+  STOP_WORDS = stopwords.words()
   wiki_texts = []
+  
   for document in documents:
     wiki_text = re.sub(r'[\?\,\(\)\.\[\]\'\`\-\"\/;=_:]', ' ', document.content[:8004].lower()) # This is approximately 1159 words, including new lines.
     wiki_texts.append(wiki_text)
   
   wiki_texts_tokens = [word_tokenize(text, language='english') for text in wiki_texts]
+  wiki_texts_tokens = [[word for word in text if word not in STOP_WORDS] for text in wiki_texts_tokens]
 
   vocabulary = set(token for wiki_text_tokens in wiki_texts_tokens for token in wiki_text_tokens)
 
   tf_vectors =  [compute_tf(wiki_text_tokens, vocabulary) for wiki_text_tokens in wiki_texts_tokens]
 
-  # tf_matrix = PrettyTable()
-  # tf_matrix.field_names = ["Term"] + [f"\"{topics[i]}\"" for i in range(len(topics))]
-  # for term in vocabulary:
-  #     tf_matrix.add_row([term] + [tf_vector[term] for tf_vector in tf_vectors])
-  # print(tf_matrix)
+#   tf_matrix = PrettyTable()
+#   tf_matrix.field_names = ["Term"] + [f"\"{topics[i]}\"" for i in range(len(topics))]
+#   for term in vocabulary:
+#       tf_matrix.add_row([term] + [tf_vector[term] for tf_vector in tf_vectors])
+#   print(tf_matrix)
 
   idf_vectors = compute_idf(wiki_texts_tokens, vocabulary)
 
   tfidf_vectors = [ compute_tfidf(tf, idf_vectors, vocabulary) for tf in tf_vectors ]
 
-  # tfidf_matrix = PrettyTable()
-  # tfidf_matrix.field_names = ["Term"] + [f"\"{topics[i]}\"" for i in range(len(topics))]
-  # for term in vocabulary:
-  #     tfidf_matrix.add_row([term] + [tfidf_vector[term] for tfidf_vector in tfidf_vectors])
-  # print(tfidf_matrix)
+#   tfidf_matrix = PrettyTable()
+#   tfidf_matrix.field_names = ["Term"] + [f"\"{topics[i]}\"" for i in range(len(topics))]
+#   for term in vocabulary:
+#       tfidf_matrix.add_row([term] + [tfidf_vector[term] for tfidf_vector in tfidf_vectors])
+#   print(tfidf_matrix)
 
-  # Compute the Cosine Similarity between the first two documents
   similarity = cosine_similarity(tfidf_vectors[2], tfidf_vectors[4], vocabulary)
   print(f"\nCosine Similarity between \"{topics[2]}\" and \"{topics[4]}\":")
   print(similarity)
